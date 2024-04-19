@@ -39,7 +39,7 @@ export default function Volunteer() {
         cases &&
         location &&
         currentUser && (
-            <main className="w-screen h-screen">
+            <main className="w-screen h-screen p-0">
                 <Map cases={cases} location={location} user={currentUser} />
             </main>
         )

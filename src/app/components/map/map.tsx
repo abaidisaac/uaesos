@@ -24,12 +24,12 @@ export default function Map(props: { cases: any; location: LngLatLike; user: Use
     useEffect(() => {
         if (!map.current) {
             map.current = new mapboxgl.Map({
+                dragRotate: false,
                 container: mapContainer.current!,
                 style: "mapbox://styles/mapbox/streets-v12",
                 attributionControl: false,
                 center: props.location,
                 zoom: 15,
-                dragRotate: false,
             });
 
             const node = document.createElement("div");
