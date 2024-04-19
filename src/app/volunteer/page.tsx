@@ -20,11 +20,25 @@ export default function Volunteer() {
         if (navigator.geolocation) {
             const success = (position: GeolocationPosition) =>
                 setLocation({ lng: position?.coords.longitude!, lat: position.coords.latitude! });
-
-            const error = (error: GeolocationPositionError) => console.log(error);
-
-            navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true });
-
+            const error = (error: GeolocationPositionError) => {
+                let errorMessage;
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage =
+                            "You denied location access. Please enable location services to use this feature.";
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage = "Your location is currently unavailable.";
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage = "Location retrieval timed out. Please try again.";
+                        break;
+                    default:
+                        errorMessage = "An error occurred while retrieving your location.";
+                }
+                alert(errorMessage);
+            };
+            navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true, maximumAge: 300 });
             fetch();
         }
         const channels = supabase
