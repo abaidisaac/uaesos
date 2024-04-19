@@ -7,9 +7,11 @@ import CurrentLocationMap from "../components/map/currentLocation";
 import { LngLatLike } from "mapbox-gl";
 import { supabase } from "../supabase";
 import { useRouter } from "next/navigation";
+import LoadingAnimation from "../components/loader";
 
 export default function Newcase() {
     const [location, setLocation] = useState<LngLatLike>();
+    const [success, setSuccess] = useState<boolean>(false);
     const medicalEmergency = useRef();
     const router = useRouter();
 
@@ -37,6 +39,7 @@ export default function Newcase() {
                         errorMessage = "An error occurred while retrieving your location.";
                 }
                 alert(errorMessage);
+                router.push("/");
             };
             navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true, maximumAge: 300 });
         }
@@ -59,24 +62,35 @@ export default function Newcase() {
             ])
             .select();
         if (data) {
-            router.push("/");
+            setSuccess(true);
+            setTimeout(() => {
+                router.push("/");
+            }, 5000);
         }
     };
 
-    return (
+    return location ? (
         <main className="flex p-5 h-full">
-            <form className="w-full flex flex-col gap-8" onSubmit={onSubmit}>
-                <FormTextBox required text="Name*"></FormTextBox>
-                <FormTextBox required text="Mobile Number*"></FormTextBox>
-                <FormTextBox required text="Requirement*"></FormTextBox>
-                <FormRadio text="Medical Emergency?*" setData={medicalEmergency} />
-                <FormTextBox required={false} text="More Details" />
-                <div className="flex flex-col gap-2">
-                    <h2>Location</h2>
-                    {location && <CurrentLocationMap location={location} setLocation={setLocation} />}
-                </div>
-                <Button text="Create Case" type="submit" />
-            </form>
+            {success ? (
+                <h2>A volunteer will reach out to you shortly.</h2>
+            ) : (
+                <form className="w-full flex flex-col gap-8" onSubmit={onSubmit}>
+                    <FormTextBox required text="Name*"></FormTextBox>
+                    <FormTextBox required text="Mobile Number*"></FormTextBox>
+                    <FormTextBox required text="Requirement*"></FormTextBox>
+                    <FormRadio text="Medical Emergency?*" setData={medicalEmergency} />
+                    <FormTextBox required={false} text="More Details" />
+                    <div className="flex flex-col gap-2">
+                        <h2>Location (Drag pin for accuracy) </h2>
+                        {location && <CurrentLocationMap location={location} setLocation={setLocation} />}
+                    </div>
+                    <Button text="Create Case" type="submit" />
+                </form>
+            )}
+        </main>
+    ) : (
+        <main className="items-center justify-center h-screen">
+            <LoadingAnimation />
         </main>
     );
 }

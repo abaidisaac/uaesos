@@ -17,6 +17,7 @@ export default function FormRadio(props: FormTextBoxInterface) {
             <h2 className="">{props.text}</h2>
             <div className="inline-flex items-center gap-4">
                 <input
+                    required
                     className="h-5 w-5 rounded-lg px-3 text-white"
                     type="radio"
                     name={props.text.toLowerCase()}

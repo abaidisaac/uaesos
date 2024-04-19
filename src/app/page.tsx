@@ -9,7 +9,7 @@ export default function Home() {
         <main className="h-screen">
             <Button
                 type="button"
-                text="New Case"
+                text="New Request"
                 onClick={() => {
                     router.push("/newcase");
                 }}

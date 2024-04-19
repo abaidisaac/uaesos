@@ -4,10 +4,13 @@ import Map from "../components/map/map";
 import { supabase } from "../supabase";
 import { LngLatLike } from "mapbox-gl";
 import { CheckAuth } from "../lib/auth";
+import { useRouter } from "next/navigation";
+import LoadingAnimation from "../components/loader";
 
 export default function Volunteer() {
     const [cases, setCases] = useState<any[]>();
     const [location, setLocation] = useState<LngLatLike>();
+    const router = useRouter();
     const { currentUser } = CheckAuth();
 
     const fetch = async () => {
@@ -37,6 +40,7 @@ export default function Volunteer() {
                         errorMessage = "An error occurred while retrieving your location.";
                 }
                 alert(errorMessage);
+                router.push("/");
             };
             navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true, maximumAge: 300 });
             fetch();
@@ -49,13 +53,13 @@ export default function Volunteer() {
             .subscribe();
     }, []);
 
-    return (
-        cases &&
-        location &&
-        currentUser && (
-            <main className="w-screen h-screen p-0">
-                <Map cases={cases} location={location} user={currentUser} />
-            </main>
-        )
+    return cases && location && currentUser ? (
+        <main className="w-screen h-screen p-0">
+            <Map cases={cases} location={location} user={currentUser} />
+        </main>
+    ) : (
+        <main className="items-center justify-center h-screen">
+            <LoadingAnimation />
+        </main>
     );
 }
