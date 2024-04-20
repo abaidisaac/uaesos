@@ -10,7 +10,7 @@ export default function SignIn() {
         event.preventDefault();
         const { data, error } = await supabase.auth.signUp({
             email: event.target.email.value,
-            password: event.target.password.value,
+            password: event.target["new password"].value,
             options: { data: { name: event.target.name.value, phone: event.target.phone.value } },
         });
 
@@ -23,7 +23,7 @@ export default function SignIn() {
             <form className="flex flex-col gap-5" onSubmit={signUp}>
                 <FormTextBox required={true} text="Name" />
                 <FormTextBox required={true} text="Email" />
-                <FormTextBox required={true} text="Password" type="password"/>
+                <FormTextBox required={true} text="New Password" type="password" />
                 <FormTextBox required={true} text="Phone" />
                 <Button text="Login" type="submit" />
             </form>
