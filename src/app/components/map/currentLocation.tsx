@@ -36,5 +36,9 @@ export default function CurrentLocationMap(props: { location: LngLatLike | undef
         });
     });
 
-    return <div className="h-96 rounded-xl" ref={mapContainer}></div>;
+    return (
+        <div className="h-96 rounded-xl" ref={mapContainer}>
+            <input value={props.location?.toString()} required></input>
+        </div>
+    );
 }

@@ -90,6 +90,7 @@ export default function Newcase() {
                             <input type="text" placeholder="Search for a location" />
                         </Autocomplete>
 
+                        
                         {<CurrentLocationMap location={location} setLocation={setLocation} />}
                     </div>
                     <Button text="Create Case" type="submit" />
