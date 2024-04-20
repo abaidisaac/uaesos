@@ -1,12 +1,13 @@
 "use client";
 import { useRouter } from "next/navigation";
 import Button from "./components/input/button";
+import ActiveCases from "./components/home/activeCases";
 
 export default function Home() {
     const router = useRouter();
 
     return (
-        <main className="h-screen">
+        <main className="h-screen pb-20">
             <Button
                 type="button"
                 text="New Request"
@@ -21,6 +22,7 @@ export default function Home() {
                     router.push("/volunteer");
                 }}
             />
+            <ActiveCases/>
         </main>
     );
 }
