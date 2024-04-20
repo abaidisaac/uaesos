@@ -27,7 +27,7 @@ export default function Volunteer() {
 
     const fetch = async () => {
         if (user?.id) {
-            const values = (await supabase.from("flood_april_2024").select("*")).data;
+            const values = (await supabase.from("flood_april_2024").select("*").eq("completed", false)).data;
             setCases(values?.filter((data: Case) => !data.completed && !data.assigned_to));
             setMyCases(values?.filter((data: Case) => !data.completed && data.assigned_to == user?.id));
         }
