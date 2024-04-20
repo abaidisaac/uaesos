@@ -4,7 +4,6 @@ import Map from "../components/map/map";
 import { supabase } from "../supabase";
 import { LngLatLike } from "mapbox-gl";
 import { CheckAuth } from "../lib/auth";
-import { useRouter } from "next/navigation";
 import LoadingAnimation from "../components/loader";
 import MyCases from "../components/map/myCases";
 import { User } from "@supabase/supabase-js";
@@ -13,8 +12,7 @@ export default function Volunteer() {
     const [cases, setCases] = useState<Case[]>();
     const [myCases, setMyCases] = useState<Case[]>();
     const [user, setUser] = useState<User>();
-    const [location, setLocation] = useState<LngLatLike>();
-    const router = useRouter();
+    const [location, setLocation] = useState<LngLatLike>({ lat: 25.25703, lng: 55.3553 });
     const { currentUser } = CheckAuth();
 
     useEffect(() => {
@@ -50,8 +48,7 @@ export default function Volunteer() {
                 let errorMessage;
                 switch (error.code) {
                     case error.PERMISSION_DENIED:
-                        errorMessage =
-                            "You denied location access. Please enable location services to use this feature.";
+                        errorMessage = "You denied location access. Please enable location services.";
                         break;
                     case error.POSITION_UNAVAILABLE:
                         errorMessage = "Your location is currently unavailable.";
@@ -63,7 +60,6 @@ export default function Volunteer() {
                         errorMessage = "An error occurred while retrieving your location.";
                 }
                 alert(errorMessage);
-                router.push("/");
             };
             navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true, maximumAge: 300 });
         }

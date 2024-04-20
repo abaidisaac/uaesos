@@ -12,7 +12,7 @@ import { Autocomplete, useLoadScript } from "@react-google-maps/api";
 import "./style.css";
 
 export default function Newcase() {
-    const [location, setLocation] = useState<LngLatLike>();
+    const [location, setLocation] = useState<LngLatLike>({ lat: 25.25703, lng: 55.3553 });
     const [success, setSuccess] = useState<boolean>(false);
     const autocompleteRef = useRef<any>();
     const medicalEmergency = useRef();
@@ -43,8 +43,7 @@ export default function Newcase() {
                 let errorMessage;
                 switch (error.code) {
                     case error.PERMISSION_DENIED:
-                        errorMessage =
-                            "You denied location access. Please enable location services to use this feature.";
+                        errorMessage = "You denied location access. Please enable location services.";
                         break;
                     case error.POSITION_UNAVAILABLE:
                         errorMessage = "Your location is currently unavailable.";
@@ -56,7 +55,6 @@ export default function Newcase() {
                         errorMessage = "An error occurred while retrieving your location.";
                 }
                 alert(errorMessage);
-                router.push("/");
             };
             navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true, maximumAge: 300 });
         }
@@ -87,9 +85,6 @@ export default function Newcase() {
 
     return location && isLoaded ? (
         <main className="flex p-5 h-full">
-            <script
-                async
-                src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&loading=async&libraries=places&callback=initMap"></script>
             {success ? (
                 <h2>A volunteer will reach out to you shortly.</h2>
             ) : (
@@ -99,7 +94,6 @@ export default function Newcase() {
                     <FormTextBox required text="Requirement*"></FormTextBox>
                     <FormRadio text="Medical Emergency?*" setData={medicalEmergency} />
                     <FormTextBox required={false} text="More Details" />
-
                     <div className="flex flex-col gap-2">
                         <h2>Location (Zoom map and drag pin for accuracy) </h2>
                         <Autocomplete
