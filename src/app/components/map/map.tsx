@@ -8,7 +8,7 @@ import Image from "next/image";
 import { User } from "@supabase/supabase-js";
 import PopUp from "./popUp";
 
-export default function Map(props: { cases: any; location: LngLatLike; user: User }) {
+export default function Map(props: { cases: any; location: LngLatLike | undefined; user: User }) {
     const mapContainer = useRef(null);
     const map = useRef<mapboxgl.Map>();
     const points = useRef<
@@ -18,7 +18,7 @@ export default function Map(props: { cases: any; location: LngLatLike; user: Use
         >
     >({});
 
-    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX!
+    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX!;
 
     useEffect(() => {
         if (!map.current) {
@@ -27,13 +27,15 @@ export default function Map(props: { cases: any; location: LngLatLike; user: Use
                 container: mapContainer.current!,
                 style: "mapbox://styles/mapbox/streets-v12",
                 attributionControl: false,
-                center: props.location,
-                zoom: 15,
+                center: props.location || { lat: 25.188626, lng: 55.372471 },
+                zoom: props.location ? 15 : 8,
             });
 
-            const node = document.createElement("div");
-            createRoot(node).render(<Image alt="location" src={navigationIcon} width={30}></Image>);
-            new mapboxgl.Marker(node).setLngLat(props.location).addTo(map.current);
+            if (props.location) {
+                const node = document.createElement("div");
+                createRoot(node).render(<Image alt="location" src={navigationIcon} width={30}></Image>);
+                new mapboxgl.Marker(node).setLngLat(props.location).addTo(map.current);
+            }
         }
         if (map.current) {
             if (Object.keys(points.current).length) {

@@ -12,7 +12,7 @@ export default function Volunteer() {
     const [cases, setCases] = useState<Case[]>();
     const [myCases, setMyCases] = useState<Case[]>();
     const [user, setUser] = useState<User>();
-    const [location, setLocation] = useState<LngLatLike>({ lat: 25.25703, lng: 55.3553 });
+    const [location, setLocation] = useState<LngLatLike>();
     const { currentUser } = CheckAuth();
 
     useEffect(() => {
@@ -44,28 +44,12 @@ export default function Volunteer() {
         if (navigator.geolocation) {
             const success = (position: GeolocationPosition) =>
                 setLocation({ lng: position?.coords.longitude!, lat: position.coords.latitude! });
-            const error = (error: GeolocationPositionError) => {
-                let errorMessage;
-                switch (error.code) {
-                    case error.PERMISSION_DENIED:
-                        errorMessage = "You denied location access. Please enable location services.";
-                        break;
-                    case error.POSITION_UNAVAILABLE:
-                        errorMessage = "Your location is currently unavailable.";
-                        break;
-                    case error.TIMEOUT:
-                        errorMessage = "Location retrieval timed out. Please try again.";
-                        break;
-                    default:
-                        errorMessage = "An error occurred while retrieving your location.";
-                }
-                alert(errorMessage);
-            };
+            const error = (error: GeolocationPositionError) => {};
             navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true, maximumAge: 300 });
         }
     }, []);
 
-    return cases && myCases && location && user ? (
+    return cases && myCases && user ? (
         <main className="w-screen h-screen p-0">
             <Map cases={cases} location={location} user={user} />
             <MyCases user={user} cases={myCases} />

@@ -3,7 +3,7 @@ import mapboxgl, { LngLatLike, Marker } from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useEffect, useRef } from "react";
 
-export default function CurrentLocationMap(props: { location: LngLatLike; setLocation: any }) {
+export default function CurrentLocationMap(props: { location: LngLatLike | undefined; setLocation: any }) {
     const mapContainer = useRef(null);
     const map = useRef<mapboxgl.Map>();
     const marker = useRef<Marker>();
@@ -16,13 +16,15 @@ export default function CurrentLocationMap(props: { location: LngLatLike; setLoc
                 container: mapContainer.current!,
                 style: "mapbox://styles/mapbox/streets-v12",
                 attributionControl: false,
-                center: props.location,
-                minZoom: 12,
+                center: props.location || { lat: 25.188626, lng: 55.372471 },
+                zoom: props.location ? 15 : 8,
             });
         }
-        marker.current?.remove();
-        map.current.setCenter(props.location)
-        marker.current = new mapboxgl.Marker({ draggable: true }).setLngLat(props.location).addTo(map.current!);
+        if (props.location) {
+            marker.current?.remove();
+            map.current.setCenter(props.location);
+            marker.current = new mapboxgl.Marker({ draggable: true }).setLngLat(props.location).addTo(map.current!);
+        }
     });
 
     useEffect(() => {
