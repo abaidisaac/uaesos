@@ -6,18 +6,41 @@ import { LngLatLike } from "mapbox-gl";
 import { CheckAuth } from "../lib/auth";
 import { useRouter } from "next/navigation";
 import LoadingAnimation from "../components/loader";
+import MyCases from "../components/map/myCases";
+import { User } from "@supabase/supabase-js";
 
 export default function Volunteer() {
-    const [cases, setCases] = useState<any[]>();
+    const [cases, setCases] = useState<Case[]>();
+    const [myCases, setMyCases] = useState<Case[]>();
+    const [user, setUser] = useState<User>();
     const [location, setLocation] = useState<LngLatLike>();
     const router = useRouter();
     const { currentUser } = CheckAuth();
 
+    useEffect(() => {
+        if (currentUser) {
+            setUser(currentUser);
+        }
+    }, [currentUser]);
+
+    useEffect(() => {
+        fetch();
+    }, [user]);
+
     const fetch = async () => {
-        const values = (await supabase.from("flood_april_2024").select("*")).data;
-        let cases = values?.filter((data: Case) => !data.completed);
-        setCases(cases);
+        if (user?.id) {
+            const values = (await supabase.from("flood_april_2024").select("*")).data;
+            setCases(values?.filter((data: Case) => !data.completed && !data.assigned_to));
+            setMyCases(values?.filter((data: Case) => !data.completed && data.assigned_to == user?.id));
+        }
     };
+
+    const channels = supabase
+        .channel("custom-all-channel")
+        .on("postgres_changes", { event: "*", schema: "public", table: "flood_april_2024" }, (payload) => {
+            fetch();
+        })
+        .subscribe();
 
     useEffect(() => {
         if (navigator.geolocation) {
@@ -43,19 +66,13 @@ export default function Volunteer() {
                 router.push("/");
             };
             navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true, maximumAge: 300 });
-            fetch();
         }
-        const channels = supabase
-            .channel("custom-all-channel")
-            .on("postgres_changes", { event: "*", schema: "public", table: "flood_april_2024" }, (payload) => {
-                fetch();
-            })
-            .subscribe();
     }, []);
 
-    return cases && location && currentUser ? (
+    return cases && myCases && location && user ? (
         <main className="w-screen h-screen p-0">
-            <Map cases={cases} location={location} user={currentUser} />
+            <Map cases={cases} location={location} user={user} />
+            <MyCases user={user} cases={myCases} />
         </main>
     ) : (
         <main className="items-center justify-center h-screen">

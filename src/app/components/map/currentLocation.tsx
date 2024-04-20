@@ -5,11 +5,10 @@ import { useEffect, useRef } from "react";
 
 export default function CurrentLocationMap(props: { location: LngLatLike; setLocation: any }) {
     const mapContainer = useRef(null);
-    const map = useRef<any>();
+    const map = useRef<mapboxgl.Map>();
     const marker = useRef<Marker>();
 
-    mapboxgl.accessToken =
-        "pk.eyJ1IjoiYWJhaWRpc2FhYyIsImEiOiJjbHY1cGFwNXAwNjAwMmlvYnhiZmFiM3JuIn0.Lb0hlrDM8faU_C8piEceFA";
+    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX!;
 
     useEffect(() => {
         if (!map.current) {
@@ -20,8 +19,10 @@ export default function CurrentLocationMap(props: { location: LngLatLike; setLoc
                 center: props.location,
                 minZoom: 12,
             });
-            marker.current = new mapboxgl.Marker({ draggable: true }).setLngLat(props.location).addTo(map.current!);
         }
+        marker.current?.remove();
+        map.current.setCenter(props.location)
+        marker.current = new mapboxgl.Marker({ draggable: true }).setLngLat(props.location).addTo(map.current!);
     });
 
     useEffect(() => {

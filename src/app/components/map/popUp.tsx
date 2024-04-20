@@ -9,7 +9,7 @@ export default function PopUp(props: { cases: Case[]; user: User }) {
     const done = async (id: number) => await supabase.from("flood_april_2024").update({ completed: true }).eq("id", id);
 
     return (
-        <div className="flex flex-col gap-2 text-black">
+        <div className="flex flex-col gap-2 text-base text-black">
             {props.cases.map((item, index) => (
                 <div
                     key={index}

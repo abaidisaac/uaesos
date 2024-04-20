@@ -18,8 +18,7 @@ export default function Map(props: { cases: any; location: LngLatLike; user: Use
         >
     >({});
 
-    mapboxgl.accessToken =
-        "pk.eyJ1IjoiYWJhaWRpc2FhYyIsImEiOiJjbHY1cGFwNXAwNjAwMmlvYnhiZmFiM3JuIn0.Lb0hlrDM8faU_C8piEceFA";
+    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX!
 
     useEffect(() => {
         if (!map.current) {
