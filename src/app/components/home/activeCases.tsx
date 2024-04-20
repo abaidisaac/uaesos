@@ -14,7 +14,7 @@ export default function ActiveCases() {
     return (
         cases && (
             <section className="flex flex-col gap-3 overflow-hidden">
-                <h2>Active Cases</h2>
+                <h2 className="uppercase">Updates on active cases</h2>
                 <div className=" flex flex-col gap-2 overflow-y-auto">
                     {cases.map((item: Case, index) => (
                         <div

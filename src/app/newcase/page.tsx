@@ -63,7 +63,7 @@ export default function Newcase() {
             setSuccess(true);
             setTimeout(() => {
                 router.push("/");
-            }, 4000);
+            }, 2000);
         }
     };
 
@@ -90,7 +90,6 @@ export default function Newcase() {
                             <input type="text" placeholder="Search for a location" />
                         </Autocomplete>
 
-                        
                         {<CurrentLocationMap location={location} setLocation={setLocation} />}
                     </div>
                     <Button text="Create Case" type="submit" />

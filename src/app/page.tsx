@@ -7,7 +7,9 @@ export default function Home() {
     const router = useRouter();
 
     return (
-        <main className="h-screen pb-20">
+        <main className="h-screen pb-16">
+            <div className=""></div>
+            <h2 className="uppercase">For users looking to log a request</h2>
             <Button
                 type="button"
                 text="New Request"
@@ -15,6 +17,7 @@ export default function Home() {
                     router.push("/newcase");
                 }}
             />
+            <h2 className="uppercase">For users looking to volunteer</h2>
             <Button
                 type="button"
                 text="Volunteer"
@@ -22,7 +25,7 @@ export default function Home() {
                     router.push("/volunteer");
                 }}
             />
-            <ActiveCases/>
+            <ActiveCases />
         </main>
     );
 }
