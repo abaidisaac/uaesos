@@ -1,22 +1,17 @@
 import { User } from "@supabase/supabase-js";
 import PopUpButton from "../input/popUpButton";
 import { accept, done } from "@/app/lib/functions";
-import { Loader } from "@googlemaps/js-api-loader";
 import { useEffect, useState } from "react";
 
 export default function ActiveCases(props: { cases: Case[]; user: User }) {
-    const loader = new Loader({
-        apiKey: "AIzaSyA4yf_AWLIvDCUI5KG_iSTp4dYppSmMSoQ",
-        version: "weekly",
-    });
-
     const [caseAddresses, setCaseAddresses] = useState<Array<string>>([]);
 
     useEffect(() => {
         Promise.all(
             props.cases.map(async (item: Case) => {
                 const location = await getAddress(item.location!);
-                return location[0].formatted_address;
+                console.log(location);
+                return location.features[0].properties.place_formatted;
             })
         ).then((addresses) => {
             setCaseAddresses(addresses);
@@ -24,9 +19,10 @@ export default function ActiveCases(props: { cases: Case[]; user: User }) {
     }, [props.cases]);
 
     const getAddress = async (location: { lng: number; lat: number }) => {
-        const geocoding = await loader.importLibrary("geocoding");
-        const geocoder = new geocoding.Geocoder();
-        return (await geocoder.geocode({ location: location })).results;
+        return fetch(
+            `https://api.mapbox.com/search/geocode/v6/reverse?longitude=${location?.lng}&latitude=${location?.lat}&access_token=` +
+                process.env.NEXT_PUBLIC_MAPBOX
+        ).then((results: any) => results.json());
     };
 
     return (
