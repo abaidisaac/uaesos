@@ -97,5 +97,5 @@ export default function Map(props: { cases: any; location: LngLatLike | undefine
             });
         }
     }, [props.cases]);
-    return <div className="h-full w-full rounded-xl" ref={mapContainer}></div>;
+    return <div className="h-full w-full" ref={mapContainer}></div>;
 }

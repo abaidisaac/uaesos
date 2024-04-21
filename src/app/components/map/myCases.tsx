@@ -1,29 +1,46 @@
 import { User } from "@supabase/supabase-js";
 import PopUpButton from "../input/popUpButton";
 import { supabase } from "@/app/supabase";
+import Button from "../input/button";
 
-export default function MyCases(props: { cases: Case[]; user: User }) {
+export default function MyCases(props: { cases: Case[]; user: User; map: boolean; setView?: any }) {
     const done = async (id: number) => await supabase.from("flood_april_2024").update({ completed: true }).eq("id", id);
 
     const unassign = async (id: number) =>
         await supabase.from("flood_april_2024").update({ assigned_to: null }).eq("id", id);
 
     return (
-        <div className="absolute text-black w-full p-5">
-            <h3 className="font-semibold">
-                Click on a circle to see details. Please accept case if you&apos;re taking it and mark done once
-                complete.
-            </h3>
-            <div className=" flex flex-row gap-2 overflow-x-scroll overflow-y-hidden w-full ">
+        <div className={(props.map ? "absolute p-5" : " overflow-y-auto") + " text-black w-full flex flex-col gap-2"}>
+            {props.map ? (
+                <>
+                    <h4 className="font-semibold text-red-500 uppercase leading-tight">
+                        Click on a circle to see details. Please accept case if you&apos;re taking it and mark done once
+                        complete.
+                    </h4>
+                    <Button
+                        text="VIEW CASES AS LIST"
+                        type="button"
+                        onClick={() => {
+                            props.setView("list");
+                        }}
+                        class="py-2 text-white"
+                    />
+                </>
+            ) : null}
+            <div
+                className={
+                    (props.map ? "flex-row overflow-auto" : "flex-col overflow-y-scroll") + " flex gap-2 w-full"
+                }>
                 {props.cases.map((item, index) => (
                     <div
                         key={index}
                         id={item.id.toString()}
-                        className={`flex flex-col justify-between rounded-xl gap-1 p-2 ${
-                            item.medical_emergency ? "bg-red-300" : "bg-blue-200"
-                        }`}>
+                        className={
+                            "flex flex-col justify-between rounded-xl w-full gap-1 p-2 " +
+                            (item.medical_emergency ? "bg-red-300" : "bg-blue-200")
+                        }>
                         <div>
-                            <p>
+                            <p className="font-semibold">
                                 {item.author} : <a href={"tel:" + item.phone}>{item.phone}</a>
                             </p>
                             <p>{item.requirement}</p>
@@ -40,23 +57,26 @@ export default function MyCases(props: { cases: Case[]; user: User }) {
                                 Map
                             </a>
                         </div>
-                        <PopUpButton
-                            text="Done"
-                            name={item.id}
-                            disabled={false}
-                            onClick={() => {
-                                done(item.id);
-                            }}
-                        />
-                        <PopUpButton
-                            text="Can't Complete"
-                            name={item.id}
-                            class="bg-red-500"
-                            disabled={false}
-                            onClick={() => {
-                                unassign(item.id);
-                            }}
-                        />
+                        <div className="flex flex-col gap-1">
+                            <PopUpButton
+                                text="Done"
+                                name={item.id}
+                                disabled={false}
+                                onClick={() => {
+                                    done(item.id);
+                                }}
+                                class="w-64"
+                            />
+                            <PopUpButton
+                                text="Can't Complete"
+                                name={item.id}
+                                class="bg-red-500 w-64"
+                                disabled={false}
+                                onClick={() => {
+                                    unassign(item.id);
+                                }}
+                            />
+                        </div>
                     </div>
                 ))}
             </div>

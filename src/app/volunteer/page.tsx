@@ -7,12 +7,14 @@ import { CheckAuth } from "../lib/auth";
 import LoadingAnimation from "../components/loader";
 import MyCases from "../components/map/myCases";
 import { User } from "@supabase/supabase-js";
+import ActiveCases from "../components/volunteer/listView";
 
 export default function Volunteer() {
     const [cases, setCases] = useState<Case[]>();
     const [myCases, setMyCases] = useState<Case[]>();
     const [user, setUser] = useState<User>();
     const [location, setLocation] = useState<LngLatLike>();
+    const [view, setView] = useState<"map" | "list">("list");
     const { currentUser } = CheckAuth();
 
     useEffect(() => {
@@ -50,9 +52,15 @@ export default function Volunteer() {
     }, []);
 
     return cases && myCases && user ? (
-        <main className="w-screen h-screen p-0">
-            <Map cases={cases} location={location} user={user} />
-            <MyCases user={user} cases={myCases} />
+        <main className={(view == "map" ? "p-0" : "") + " h-screen w-screen"}>
+            {view == "list" ? (
+                <ActiveCases user={user} cases={cases} myCases={myCases} setView={setView} />
+            ) : (
+                <>
+                    <Map cases={cases} location={location} user={user} />
+                    <MyCases user={user} cases={myCases} map setView={setView} />
+                </>
+            )}
         </main>
     ) : (
         <main className="items-center justify-center h-screen">
