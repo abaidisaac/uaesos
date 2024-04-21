@@ -16,7 +16,7 @@ export default function ListView(props: { user: User; myCases: Case[]; cases: Ca
                     onClick={() => {
                         props.setView("map");
                     }}
-                    class="py-2"
+                    short
                 />
                 <div className="h-[43%] w-full flex flex-col gap-1">
                     <h2 className="uppercase">My cases</h2>

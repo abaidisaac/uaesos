@@ -10,4 +10,5 @@ interface Case {
     assigned_to: string;
     completed: boolean;
     created_at: Date;
+    assigned_to_other: boolean;
 }

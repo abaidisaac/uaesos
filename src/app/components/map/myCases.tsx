@@ -1,14 +1,9 @@
 import { User } from "@supabase/supabase-js";
-import PopUpButton from "../input/popUpButton";
-import { supabase } from "@/app/supabase";
 import Button from "../input/button";
+import { CustomCaseButton } from "../input/caseButtons";
+import { done, unassign } from "@/app/lib/functions";
 
 export default function MyCases(props: { cases: Case[]; user: User; map: boolean; setView?: any }) {
-    const done = async (id: number) => await supabase.from("flood_april_2024").update({ completed: true }).eq("id", id);
-
-    const unassign = async (id: number) =>
-        await supabase.from("flood_april_2024").update({ assigned_to: null }).eq("id", id);
-
     return (
         <div className={(props.map ? "absolute p-5" : " overflow-y-auto") + " text-black w-full flex flex-col gap-2"}>
             {props.map ? (
@@ -23,7 +18,8 @@ export default function MyCases(props: { cases: Case[]; user: User; map: boolean
                         onClick={() => {
                             props.setView("list");
                         }}
-                        class="py-2 text-white"
+                        short
+                        class="text-white"
                     />
                 </>
             ) : null}
@@ -37,7 +33,11 @@ export default function MyCases(props: { cases: Case[]; user: User; map: boolean
                         id={item.id.toString()}
                         className={
                             "flex flex-col justify-between rounded-xl w-full gap-1 p-2 " +
-                            (item.medical_emergency ? "bg-red-300" : "bg-blue-200")
+                            (item.medical_emergency
+                                ? "bg-red-300"
+                                : item.assigned_to_other
+                                ? "bg-orange-300"
+                                : "bg-blue-200")
                         }>
                         <div>
                             <p className="font-semibold">
@@ -58,18 +58,15 @@ export default function MyCases(props: { cases: Case[]; user: User; map: boolean
                             </a>
                         </div>
                         <div className="flex flex-col gap-1">
-                            <PopUpButton
+                            <CustomCaseButton
                                 text="Done"
-                                name={item.id}
                                 disabled={false}
                                 onClick={() => {
                                     done(item.id);
                                 }}
-                                class="w-64"
                             />
-                            <PopUpButton
+                            <CustomCaseButton
                                 text="Can't Complete"
-                                name={item.id}
                                 class="bg-red-500 w-64"
                                 disabled={false}
                                 onClick={() => {

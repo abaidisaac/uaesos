@@ -1,7 +1,7 @@
 import { User } from "@supabase/supabase-js";
-import PopUpButton from "../input/popUpButton";
-import { accept, done } from "@/app/lib/functions";
 import { useEffect, useState } from "react";
+import { CaseButton } from "../input/caseButtons";
+
 
 export default function ActiveCases(props: { cases: Case[]; user: User }) {
     const [caseAddresses, setCaseAddresses] = useState<Array<string>>([]);
@@ -10,7 +10,6 @@ export default function ActiveCases(props: { cases: Case[]; user: User }) {
         Promise.all(
             props.cases.map(async (item: Case) => {
                 const location = await getAddress(item.location!);
-                console.log(location);
                 return location.features[0].properties.place_formatted;
             })
         ).then((addresses) => {
@@ -55,25 +54,7 @@ export default function ActiveCases(props: { cases: Case[]; user: User }) {
                             }>
                             Map
                         </a>
-                        {item.assigned_to == props.user.id ? (
-                            <PopUpButton
-                                text="Done"
-                                name={item.id}
-                                disabled={false}
-                                onClick={() => {
-                                    done(item.id);
-                                }}
-                            />
-                        ) : (
-                            <PopUpButton
-                                name={item.id}
-                                text={item.assigned_to ? "Accepted" : "Accept"}
-                                disabled={item.assigned_to ? true : false}
-                                onClick={() => {
-                                    accept(item.id, props.user.id);
-                                }}
-                            />
-                        )}
+                        <CaseButton item={item} user={props.user} />
                     </div>
                 );
             })}

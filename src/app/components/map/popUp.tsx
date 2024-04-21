@@ -1,13 +1,9 @@
 import { User } from "@supabase/supabase-js";
-import PopUpButton from "../input/popUpButton";
-import { supabase } from "@/app/supabase";
+import { CaseButton } from "../input/caseButtons";
+
 
 export default function PopUp(props: { cases: Case[]; user: User }) {
-    const accept = async (id: number) =>
-        await supabase.from("flood_april_2024").update({ assigned_to: props.user.id }).eq("id", id);
-
-    const done = async (id: number) => await supabase.from("flood_april_2024").update({ completed: true }).eq("id", id);
-
+    console.log("map", props.cases);
     return (
         <div className="flex flex-col gap-2 text-base text-black">
             {props.cases.map((item, index) => (
@@ -33,25 +29,7 @@ export default function PopUp(props: { cases: Case[]; user: User }) {
                         }>
                         Map
                     </a>
-                    {item.assigned_to == props.user.id ? (
-                        <PopUpButton
-                            text="Done"
-                            name={item.id}
-                            disabled={false}
-                            onClick={() => {
-                                done(item.id);
-                            }}
-                        />
-                    ) : (
-                        <PopUpButton
-                            name={item.id}
-                            text={item.assigned_to ? "Accepted" : "Accept"}
-                            disabled={item.assigned_to ? true : false}
-                            onClick={() => {
-                                accept(item.id);
-                            }}
-                        />
-                    )}
+                    <CaseButton item={item} user={props.user} />
                 </div>
             ))}
         </div>

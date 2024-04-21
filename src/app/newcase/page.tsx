@@ -25,7 +25,6 @@ export default function Newcase() {
 
     const handlePlaceChanged = () => {
         const place = autocompleteRef.current.getPlace();
-        console.log(place.geometry.location.lat());
         setLocation({
             lat: place.geometry.location.lat(),
             lng: place.geometry.location.lng(),
@@ -89,7 +88,6 @@ export default function Newcase() {
                             options={{ fields: ["address_components", "geometry", "name"] }}>
                             <input type="text" placeholder="Search for a location" />
                         </Autocomplete>
-
                         {<CurrentLocationMap location={location} setLocation={setLocation} />}
                     </div>
                     <Button text="Create Case" type="submit" />
