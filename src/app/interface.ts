@@ -1,4 +1,5 @@
 interface Case {
+    address?: string;
     id: number;
     author: string;
     phone: string;
