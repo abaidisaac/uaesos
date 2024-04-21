@@ -15,7 +15,7 @@ export default function SignIn() {
         });
 
         if (data) {
-            router.push("/");
+            router.push("/volunteer");
         }
     };
     return (
@@ -25,7 +25,7 @@ export default function SignIn() {
                 <FormTextBox required={true} text="Email" />
                 <FormTextBox required={true} text="New Password" type="password" />
                 <FormTextBox required={true} text="Phone" />
-                <Button text="Login" type="submit" />
+                <Button text="Sign Up" type="submit" />
             </form>
         </main>
     );

@@ -24,14 +24,9 @@ export default function SignIn() {
                 <FormTextBox required={true} text="Password" type="password" />
                 <Button text="Login" type="submit" />
             </form>
-            <h2>New Volunteers please Sign Up using below button.</h2>
-            <Button
-                text="Sign Up"
-                type="button"
-                onClick={() => {
-                    router.push("/signup");
-                }}
-            />
+            <h2>
+                New Volunteers please sign up using this link. <a href="/signup">Sign Up</a>
+            </h2>
         </main>
     );
 }

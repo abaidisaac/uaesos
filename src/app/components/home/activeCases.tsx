@@ -17,13 +17,17 @@ export default function ActiveCases() {
                 <h2 className="uppercase">Updates on active cases</h2>
                 <div className=" flex flex-col gap-2 overflow-y-auto">
                     {cases.map((item: Case, index) => (
-                        <div
+                        <a
+                            href="/volunteer"
                             key={index}
-                            className={(item.assigned_to ? "bg-green-500" : "bg-gray-500") + " p-3 rounded-xl"}>
+                            className={
+                                (item.assigned_to ? "bg-green-500" : "bg-gray-500") +
+                                " p-3 rounded-xl text-white no-underline"
+                            }>
                             <p className="font-semibold">{item.author}</p>
                             <p>{item.requirement}</p>
                             <p>{item.assigned_to ? "In Progress" : "Pending"}</p>
-                        </div>
+                        </a>
                     ))}
                 </div>
             </section>
