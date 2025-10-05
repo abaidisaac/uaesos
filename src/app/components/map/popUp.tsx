@@ -3,22 +3,19 @@ import { CaseButton } from "../input/caseButtons";
 
 
 export default function PopUp(props: { cases: Case[]; user: User }) {
-    console.log("map", props.cases);
     return (
-        <div className="flex flex-col gap-2 text-base text-black">
-            {props.cases.map((item, index) => (
+        <>
+            { props.cases.map((item, index) => (
                 <div
-                    key={index}
-                    id={item.id.toString()}
-                    className={`flex flex-col rounded-xl gap-1 p-2 ${
-                        item.medical_emergency ? "bg-red-300" : "bg-blue-200"
-                    }`}>
-                    <p>
-                        {item.author} : <a href={"tel:" + item.phone}>{item.phone}</a>
+                    className={ `flex flex-col gap-1 rounded-xl p-2 ${item.medical_emergency ? "bg-red-300" : "bg-blue-200"}` }
+                    key={ index }
+                    id={ item.id.toString() }
+                >
+                    <p className="margin-0">
+                        Name : { item.author }
                     </p>
-                    <p>{item.requirement}</p>
-                    <p>{item.more_details}</p>
-                    <p>{new Date(item.created_at).toLocaleString()}</p>
+                    <p className="margin-0">Phone : <a href={ "tel:" + item.phone }>{ item.phone }</a></p>
+                    <p className="margin-0">Details: <br />{ item.detail }</p>
                     <a
                         target="_blank"
                         href={
@@ -27,11 +24,14 @@ export default function PopUp(props: { cases: Case[]; user: User }) {
                             "," +
                             item.location?.lng
                         }>
-                        Map
+                        View on Google Maps
                     </a>
-                    <CaseButton item={item} user={props.user} />
+                    {/* <br /> */}
+                    <p className="margin-0">{ new Date(item.created_at).toLocaleString() }</p>
+
+                    <CaseButton item={ item } user={ props.user } />
                 </div>
-            ))}
-        </div>
+            )) }
+        </>
     );
 }

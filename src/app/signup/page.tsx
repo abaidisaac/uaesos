@@ -10,21 +10,23 @@ export default function SignIn() {
         event.preventDefault();
         const { data, error } = await supabase.auth.signUp({
             email: event.target.email.value,
-            password: event.target["new password"].value,
-            options: { data: { name: event.target.name.value, phone: event.target.phone.value } },
+            password: event.target.password.value,
+            phone: event.target.phone.value,
+            options: { data: { firstName: event.target.firstName.value, lastName: event.target.lastName.value } },
         });
 
-        if (data) {
+        if (data.session !== null) {
             router.push("/volunteer");
         }
     };
     return (
         <main>
-            <form className="flex flex-col gap-5" onSubmit={signUp}>
-                <FormTextBox required={true} text="Name" />
-                <FormTextBox required={true} text="Email" />
-                <FormTextBox required={true} text="New Password" type="password" />
-                <FormTextBox required={true} text="Phone" />
+            <form className="flex flex-col gap-5" onSubmit={ signUp }>
+                <FormTextBox required={ true } text="First Name" type="firstName" name="firstName" />
+                <FormTextBox required={ true } text="Last Name" type="lastName" name="lastName" />
+                <FormTextBox required={ true } text="Email" type="email" name="email" />
+                <FormTextBox required={ true } text="New Password" type="password" name="password" />
+                <FormTextBox required={ true } text="Phone" type="phone" name="phone" />
                 <Button text="Sign Up" type="submit" />
             </form>
         </main>

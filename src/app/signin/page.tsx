@@ -3,11 +3,14 @@ import { useRouter } from "next/navigation";
 import Button from "../components/input/button";
 import FormTextBox from "../components/input/formTextBox";
 import { supabase } from "../supabase";
+import { useState } from "react";
 
 export default function SignIn() {
     const router = useRouter();
+    const [loading, setLoading] = useState(false);
     const signIn = async (event: any) => {
         event.preventDefault();
+        setLoading(true);
         const { data, error } = await supabase.auth.signInWithPassword({
             email: event.target.email.value,
             password: event.target.password.value,
@@ -19,14 +22,12 @@ export default function SignIn() {
 
     return (
         <main>
-            <form className="flex flex-col gap-5" onSubmit={signIn}>
-                <FormTextBox required={true} text="Email" />
-                <FormTextBox required={true} text="Password" type="password" />
-                <Button text="Login" type="submit" />
+            <form className="flex flex-col gap-5" onSubmit={ signIn }>
+                <FormTextBox required={ true } text="Email" name="email" type="email" />
+                <FormTextBox required={ true } text="Password" name="password" type="password" />
+                <Button text="Login" type="submit" loading={ loading } />
             </form>
-            <h2>
-                New Volunteers please sign up using this link. <a href="/signup">Sign Up</a>
-            </h2>
+            <Button text="Sign Up" type="button" onClick={ () => router.push("/signup") } />
         </main>
     );
 }

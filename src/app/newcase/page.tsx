@@ -1,60 +1,36 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import FormRadio from "../components/input/formRadio";
 import FormTextBox from "../components/input/formTextBox";
 import Button from "../components/input/button";
-import CurrentLocationMap from "../components/map/currentLocation";
-import { LngLatLike } from "mapbox-gl";
+const CurrentLocationMap = dynamic(
+    () => import("../components/map/currentLocation"),
+    { ssr: false }
+);
 import { supabase } from "../supabase";
 import { useRouter } from "next/navigation";
-import LoadingAnimation from "../components/loader";
-import { Autocomplete, useLoadScript } from "@react-google-maps/api";
 import "./style.css";
+import { useCurrentLocation } from "../lib/location";
 
 export default function Newcase() {
-    const [location, setLocation] = useState<LngLatLike>();
     const [success, setSuccess] = useState<boolean>(false);
-    const autocompleteRef = useRef<any>();
-    const medicalEmergency = useRef();
+    const medicalEmergency = useRef<string | null>(null);
     const router = useRouter();
-
-    const { isLoaded } = useLoadScript({
-        googleMapsApiKey: "AIzaSyA4yf_AWLIvDCUI5KG_iSTp4dYppSmMSoQ",
-        libraries: ["places"],
-    });
-
-    const handlePlaceChanged = () => {
-        const place = autocompleteRef.current.getPlace();
-        setLocation({
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng(),
-        });
-    };
-
-    useEffect(() => {
-        if (navigator.geolocation) {
-            const success = (position: GeolocationPosition) =>
-                setLocation({
-                    lng: Number(position?.coords.longitude!.toFixed(5)),
-                    lat: Number(position.coords.latitude!.toFixed(5)),
-                });
-            const error = (error: GeolocationPositionError) => {};
-            navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true, maximumAge: 300 });
-        }
-    }, []);
+    const hookPos = useCurrentLocation();
 
     const onSubmit = async (event: any) => {
         event.preventDefault();
         const { data, error } = await supabase
-            .from("flood_april_2024")
+            .from("cases")
             .insert([
                 {
-                    requirement: event.target.requirement.value,
-                    phone: event.target["mobile number"].value,
+                    // requirement: event.target.requirement.value,
+                    phone: event.target.mobileNumber.value,
                     author: event.target.name.value,
-                    medical_emergency: medicalEmergency.current == "yes" ? true : false,
-                    more_details: event.target["more details"].value,
-                    location: location,
+                    medical_emergency: medicalEmergency.current,
+                    detail: event.target.detail.value,
+                    location: { lat: hookPos?.[0], lng: hookPos?.[1] },
                 },
             ])
             .select();
@@ -66,37 +42,25 @@ export default function Newcase() {
         }
     };
 
-    return isLoaded ? (
+    return (
         <main className="flex p-5 h-full">
-            {success ? (
+            { success ? (
                 <h2>A volunteer will reach out to you shortly.</h2>
             ) : (
-                <form className="w-full flex flex-col gap-8" onSubmit={onSubmit}>
-                    <FormTextBox required text="Name*"></FormTextBox>
-                    <FormTextBox required text="Mobile Number*" placeholder="05XXXXXXXX"></FormTextBox>
-                    <FormTextBox required text="Requirement*"></FormTextBox>
-                    <FormRadio text="Medical Emergency?*" setData={medicalEmergency} />
-                    <FormTextBox required={false} text="More Details" />
+                <form className="w-full flex flex-col gap-8" onSubmit={ onSubmit }>
+                    <FormTextBox required text="Name*" name="name" type="name" />
+                    <FormTextBox required text="Mobile Number*" placeholder="05XXXXXXXX" name="mobileNumber" type="tel" />
+                    <FormTextBox required={ false } text="Details" name="detail" />
+                    <FormRadio text="Medical Emergency?*" setData={ medicalEmergency } />
                     <div className="flex flex-col gap-2">
                         <h2>Location (Zoom map and drag pin for accuracy) </h2>
-                        <Autocomplete
-                            restrictions={{ country: "ae" }}
-                            onLoad={(autocomplete) => {
-                                autocompleteRef.current = autocomplete;
-                            }}
-                            onPlaceChanged={handlePlaceChanged}
-                            options={{ fields: ["address_components", "geometry", "name"] }}>
-                            <input type="text" placeholder="Search for a location" />
-                        </Autocomplete>
-                        {<CurrentLocationMap location={location} setLocation={setLocation} />}
+                        <div className="overflow-hidden w-full h-80 rounded-lg">
+                            <CurrentLocationMap />
+                        </div>
                     </div>
                     <Button text="Create Case" type="submit" />
                 </form>
-            )}
+            ) }
         </main>
-    ) : (
-        <main className="items-center justify-center h-screen">
-            <LoadingAnimation />
-        </main>
-    );
+    )
 }

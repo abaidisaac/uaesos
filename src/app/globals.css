@@ -1,31 +1,32 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-:root {
-    --foreground-rgb: 0, 0, 0;
-    --background-start-rgb: 214, 219, 220;
-    --background-end-rgb: 255, 255, 255;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer utilities {
     :root {
-        --foreground-rgb: 255, 255, 255;
-        --background-start-rgb: 0, 0, 0;
-        --background-end-rgb: 0, 0, 0;
+        --foreground-rgb: 0, 0, 0;
+        --background-start-rgb: 214, 219, 220;
+        --background-end-rgb: 255, 255, 255;
     }
-}
 
-body {
-    color: rgb(var(--foreground-rgb));
-    background: linear-gradient(to bottom, transparent, rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
-}
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --foreground-rgb: 255, 255, 255;
+            --background-start-rgb: 0, 0, 0;
+            --background-end-rgb: 0, 0, 0;
+        }
+    }
 
-main {
-    display: flex;
-    flex-direction: column;
-    padding: 20px;
-    gap: 20px;
+    body {
+        color: rgb(var(--foreground-rgb));
+        background: linear-gradient(to bottom, transparent, rgb(var(--background-end-rgb)))
+            rgb(var(--background-start-rgb));
+    }
+
+    main {
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
+        gap: 10px;
+    }
 }
 
 @layer utilities {
@@ -34,17 +35,18 @@ main {
     }
 }
 
-@layer base {
-    h1 {
-        @apply text-4xl;
-    }
-    h2 {
-        @apply text-2xl;
-    }
-    h3 {
-        @apply text-xl;
-    }
-    a {
-        @apply text-blue-600 underline;
-    }
+h1 {
+    font-size: 21px;
+}
+
+.leaflet-container .leaflet-popup-content p {
+    margin: 0 !important;
+    padding: 0; /* optional */
+}
+
+.leaflet-container .leaflet-popup-content {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin: 10px;
 }

@@ -3,12 +3,16 @@ interface Case {
     id: number;
     author: string;
     phone: string;
-    requirement: string;
-    more_details: string;
+    detail: string;
     location?: { lat: number; lng: number };
     medical_emergency: boolean;
-    assigned_to: string;
+    volunteer: string;
     completed: boolean;
     created_at: Date;
     assigned_to_other: boolean;
+}
+
+interface LatLng {
+    lat: number;
+    lng: number;
 }
