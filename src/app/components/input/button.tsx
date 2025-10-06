@@ -5,6 +5,7 @@ export default function DefaultButton(props: {
     onClick?: () => void;
     type: "submit" | "button";
     loading?: boolean;
+    disabled?: boolean;
 }) {
     return props.loading ?
         <button
@@ -14,10 +15,12 @@ export default function DefaultButton(props: {
         </button> :
         (
             <button
-                className={ "bg-gray-600 w-full rounded-xl text-xl cursor-pointer py-2 z-[1000] text-white" }
+                className={ `bg-gray-600 w-full rounded-xl text-xl  py-2 z-[1000] text-white ${props.disabled ? "opacity-50" : "cursor-pointer"}` }
                 onClick={ props.onClick }
-                type={ props.type }>
+                type={ props.type }
+                disabled={ props.disabled } >
                 { props.text }
-            </button>
+
+            </ button>
         );
 }

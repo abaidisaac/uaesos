@@ -5,87 +5,74 @@ import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import LoadingAnimation from "../loader";
-import { useCurrentLocation } from "../../lib/location";
-import { Pane } from "react-leaflet";
+import Image from "next/image";
+import targetIcon from '@/../public/crosshair.png'
+import { loadLeafletModules } from "../../lib/leaflet";
+import { useGeolocationWithStatus } from "../../lib/location";
 
 export default function CurrentLocationMap() {
     const [components, setComponents] = useState<any>(null);
     const [position, setPosition] = useState<[number, number] | null>(null);
-    const mounted = useRef(false);
+    const [following, setFollowing] = useState<boolean>(true);
     const mapRef = useRef<any>(null);
 
+    const { position: hookPos, status, startWatch, stopWatch } = useGeolocationWithStatus({ autoRequest: true, autoWatch: true });
+
     useEffect(() => {
-        mounted.current = true;
+        let mounted = true;
 
-        let watcher: number | null = null;
-
-        // Dynamically import leaflet and react-leaflet on the client only.
-        const loadLeaflet = async () => {
+        const load = async () => {
             try {
-                const [LModule, RLModule] = await Promise.all([
-                    import("leaflet"),
-                    import("react-leaflet"),
-                ]);
-
-                const L = (LModule && (LModule as any).default) || LModule;
+                const { L, RLModule } = await loadLeafletModules();
 
                 const iconUrl = (markerIcon as any).src ?? (markerIcon as unknown as string);
                 const iconRetinaUrl = (markerIcon2x as any).src ?? (markerIcon2x as unknown as string);
                 const shadowUrl = (markerShadow as any).src ?? (markerShadow as unknown as string);
 
-                // Configure default icon after leaflet is available
                 if (L && L.Icon && L.Icon.Default && typeof L.Icon.Default.mergeOptions === "function") {
-                    L.Icon.Default.mergeOptions({
-                        iconUrl,
-                        iconRetinaUrl,
-                        shadowUrl,
-                    });
+                    L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl });
                 }
 
+                if (!mounted) return;
                 setComponents(RLModule);
             } catch (err) {
                 console.error("Failed to load leaflet/react-leaflet:", err);
             }
         };
 
-        loadLeaflet();
+        load();
 
         return () => {
-            mounted.current = false;
-            if (watcher !== null) navigator.geolocation.clearWatch(watcher);
+            mounted = false;
+            try { stopWatch(); } catch (e) { /* ignore */ }
         };
-    }, []);
-
-    // Use shared hook for current location
-    const hookPos = useCurrentLocation();
+    }, [stopWatch]);
 
     useEffect(() => {
-        if (hookPos) {
+        if (!hookPos) return;
+        if (following) {
             setPosition(hookPos);
-            // Optionally pan map when the position first becomes available
             if (mapRef.current && typeof mapRef.current.panTo === 'function') {
-                mapRef.current.panTo(hookPos);
+                try { mapRef.current.panTo(hookPos); } catch (err) { console.error('panTo failed', err); }
             }
         }
-    }, [hookPos]);
-    console.log('hookPos', hookPos);
+    }, [hookPos, following]);
 
     if (!components || !position) {
+        if (hookPos && !position) setPosition(hookPos);
         return <div className="h-full w-full flex items-center justify-center"><LoadingAnimation /></div>;
-
     }
 
-    const { MapContainer, TileLayer, Marker, } = components as any;
+    const { MapContainer, TileLayer, Marker, Pane } = components as any;
 
     return (
         <div className="h-full w-full">
             <MapContainer
-                whenCreated={ (map: any) => {
-                    mapRef.current = map;
-                } }
+                whenCreated={ (map: any) => { console.log("Map instance created:", mapRef.current); mapRef.current = map; } }
                 center={ position }
-                zoom={ 15 }
+                zoom={ 18 }
                 scrollWheelZoom={ true }
+                zoomControl={ false }
                 className="h-full w-full"
             >
                 <Pane name="overlay" style={ { zIndex: 200 } } />
@@ -105,17 +92,35 @@ export default function CurrentLocationMap() {
                                     const latLng = marker.getLatLng();
                                     const newPos: [number, number] = [latLng.lat, latLng.lng];
                                     setPosition(newPos);
-                                    // Pan map to the new marker position
+                                    setFollowing(false);
                                     if (mapRef.current && typeof mapRef.current.panTo === 'function') {
                                         mapRef.current.panTo(newPos);
                                     }
                                 } catch (err) {
-                                    // eslint-disable-next-line no-console
                                     console.error('Error handling marker dragend', err);
                                 }
                             },
                         } }
                     />
+                ) }
+
+                { !following && (
+                    <div className="absolute top-2 right-2 z-[500]">
+                        <button
+                            className="bg-white text-sm text-black p-2 rounded-full shadow cursor-pointer"
+                            onClick={ () => {
+                                setFollowing(true);
+                                if (hookPos) {
+                                    setPosition(hookPos);
+                                    if (mapRef.current && typeof mapRef.current.panTo === 'function') {
+                                        mapRef.current.panTo(hookPos);
+                                    }
+                                }
+                            } }
+                        >
+                            <Image src={ targetIcon } alt="Recenter" width={ 20 } height={ 20 } />
+                        </button>
+                    </div>
                 ) }
             </MapContainer>
         </div>

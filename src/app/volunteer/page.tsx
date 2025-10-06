@@ -7,12 +7,13 @@ import LoadingAnimation from "../components/loader";
 import MyCases from "../components/map/myCases";
 import { User } from "@supabase/supabase-js";
 import ActiveCases from "../components/volunteer/listView";
+import { useGeolocationWithStatus } from "../lib/location";
 
 export default function Volunteer() {
     const [cases, setCases] = useState<Case[]>();
     const [myCases, setMyCases] = useState<Case[]>();
     const [user, setUser] = useState<User>();
-    const [location, setLocation] = useState<{ lng: number; lat: number }>();
+    const [location, setLocation] = useState<[number, number]>();
     const [view, setView] = useState<"map" | "list">("list");
     const { currentUser } = CheckAuth();
 
@@ -53,14 +54,18 @@ export default function Volunteer() {
         };
     }, [user]);
 
+    const { position: geoPosition, startWatch, stopWatch } = useGeolocationWithStatus({ autoRequest: true, autoWatch: false });
+
     useEffect(() => {
-        if (navigator.geolocation) {
-            const success = (position: GeolocationPosition) =>
-                setLocation({ lng: position?.coords.longitude!, lat: position.coords.latitude! });
-            const error = (error: GeolocationPositionError) => { };
-            navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true, maximumAge: 300 });
-        }
-    }, []);
+        // if hook provides a position, set it once
+        if (geoPosition) setLocation(geoPosition);
+    }, [geoPosition]);
+
+    useEffect(() => {
+        // start a light watch while this view is mounted to keep location reasonably fresh
+        startWatch({ enableHighAccuracy: true, maximumAge: 300, timeout: 5000 });
+        return () => { stopWatch(); };
+    }, [startWatch, stopWatch]);
 
     // Combine regular cases and myCases so markers show for both sets
     const mapCases = useMemo(() => {

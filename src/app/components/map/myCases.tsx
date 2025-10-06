@@ -4,7 +4,7 @@ import CaseTile from "../caseTile";
 
 export default function MyCases(props: { cases: Case[]; user: User; map: boolean; setView?: any }) {
     return (
-        <div className={ (props.map ? "absolute p-3 z-[1000] bg-black/50 m-2 rounded-xl w-[98.7%]" : " overflow-y-auto") + " text-black flex flex-col gap-2" }>
+        <div className={ (props.map ? "absolute p-3 z-[1000] bg-black/50 m-2 rounded-xl md:w-[98.7%] w-[96.1%]" : " overflow-y-auto") + " text-black flex flex-col gap-2" }>
             { props.map ? (
                 <>
                     <Button

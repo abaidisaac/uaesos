@@ -15,9 +15,9 @@ export default function CaseTile(props: { item: Case; user: User }) {
             target="_blank"
             href={
                 "https://www.google.com/maps/search/?api=1&query=" +
-                props.item.location?.lat +
+                props.item.location?.[0] +
                 "," +
-                props.item.location?.lng
+                props.item.location?.[1]
             }>
             View on Google Maps
         </a>

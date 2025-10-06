@@ -4,7 +4,7 @@ interface Case {
     author: string;
     phone: string;
     detail: string;
-    location?: { lat: number; lng: number };
+    location?: [number, number];
     medical_emergency: boolean;
     volunteer: string;
     completed: boolean;

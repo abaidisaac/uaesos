@@ -20,9 +20,9 @@ export default function PopUp(props: { cases: Case[]; user: User }) {
                         target="_blank"
                         href={
                             "https://www.google.com/maps/search/?api=1&query=" +
-                            item.location?.lat +
+                            item.location?.[0] +
                             "," +
-                            item.location?.lng
+                            item.location?.[1]
                         }>
                         View on Google Maps
                     </a>

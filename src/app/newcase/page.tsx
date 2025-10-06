@@ -11,26 +11,26 @@ const CurrentLocationMap = dynamic(
 import { supabase } from "../supabase";
 import { useRouter } from "next/navigation";
 import "./style.css";
-import { useCurrentLocation } from "../lib/location";
+import { useGeolocationWithStatus } from "../lib/location";
 
 export default function Newcase() {
     const [success, setSuccess] = useState<boolean>(false);
     const medicalEmergency = useRef<string | null>(null);
     const router = useRouter();
-    const hookPos = useCurrentLocation();
+    const { position, status, locationError, requestLocation } = useGeolocationWithStatus();
 
     const onSubmit = async (event: any) => {
         event.preventDefault();
+
         const { data, error } = await supabase
             .from("cases")
             .insert([
                 {
-                    // requirement: event.target.requirement.value,
                     phone: event.target.mobileNumber.value,
                     author: event.target.name.value,
                     medical_emergency: medicalEmergency.current,
                     detail: event.target.detail.value,
-                    location: { lat: hookPos?.[0], lng: hookPos?.[1] },
+                    location: position,
                 },
             ])
             .select();
@@ -53,12 +53,13 @@ export default function Newcase() {
                     <FormTextBox required={ false } text="Details" name="detail" />
                     <FormRadio text="Medical Emergency?*" setData={ medicalEmergency } />
                     <div className="flex flex-col gap-2">
-                        <h2>Location (Zoom map and drag pin for accuracy) </h2>
+                        <h2>Location <p className="text-xs">Drag and drop pin to adjust the pin for best accuracy.</p> </h2>
+                        { locationError && <p className="text-red-600 text-sm">{ locationError }</p> }
                         <div className="overflow-hidden w-full h-80 rounded-lg">
                             <CurrentLocationMap />
                         </div>
                     </div>
-                    <Button text="Create Case" type="submit" />
+                    <Button text="Create Case" type="submit" disabled={ !position } />
                 </form>
             ) }
         </main>
