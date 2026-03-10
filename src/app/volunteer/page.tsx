@@ -13,9 +13,9 @@ export default function Volunteer() {
     const [cases, setCases] = useState<Case[]>();
     const [myCases, setMyCases] = useState<Case[]>();
     const [user, setUser] = useState<User>();
-    const [location, setLocation] = useState<[number, number]>();
+    const [location, setLocation] = useState<{ coords: [number, number]; heading?: number }>();
     const [view, setView] = useState<"map" | "list">("list");
-    const { currentUser } = CheckAuth();
+    const { currentUser, loading: authLoading } = CheckAuth();
 
     useEffect(() => {
         if (currentUser) {
@@ -57,7 +57,7 @@ export default function Volunteer() {
     const { position: geoPosition, startWatch, stopWatch } = useGeolocationWithStatus({ autoRequest: true, autoWatch: false });
 
     useEffect(() => {
-        // if hook provides a position, set it once
+        // if hook provides a position object, set it once
         if (geoPosition) setLocation(geoPosition);
     }, [geoPosition]);
 
@@ -75,16 +75,24 @@ export default function Volunteer() {
         return a;
     }, [cases, myCases]);
 
+    if (authLoading) {
+        return (
+            <main className="items-center justify-center h-screen">
+                <LoadingAnimation />
+            </main>
+        );
+    }
+
     return cases && myCases && user ? (
-        <main className={ (view == "map" ? "p-0" : "") + " h-screen w-screen" }>
-            { view == "list" ? (
-                <ActiveCases user={ user } cases={ cases } myCases={ myCases } setView={ setView } />
+        <main className={(view == "map" ? "p-0" : "") + " h-screen w-screen"}>
+            {view == "list" ? (
+                <ActiveCases user={user} cases={cases} myCases={myCases} setView={setView} />
             ) : (
                 <>
-                    <Map cases={ mapCases } location={ location } user={ user } />
-                    <MyCases user={ user } cases={ myCases } map setView={ setView } />
+                    <Map cases={mapCases} location={location?.coords} heading={location?.heading} user={user} />
+                    <MyCases user={user} cases={myCases} map setView={setView} />
                 </>
-            ) }
+            )}
         </main>
     ) : (
         <main className="items-center justify-center h-screen">

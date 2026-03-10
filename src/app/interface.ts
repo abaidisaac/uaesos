@@ -4,12 +4,15 @@ interface Case {
     author: string;
     phone: string;
     detail: string;
-    location?: [number, number];
+    // Geolocation should always be a pair of numbers once created
+    location: [number, number];
     medical_emergency: boolean;
-    volunteer: string;
+    // volunteer can be null if unassigned
+    volunteer: string | null;
     completed: boolean;
-    created_at: Date;
-    assigned_to_other: boolean;
+    // Supabase returns timestamps as strings
+    created_at: string;
+    assigned_to_other?: boolean;
 }
 
 interface LatLng {

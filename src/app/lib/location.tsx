@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-type Loc = [number, number] | null;
+type Loc = { coords: [number, number]; heading?: number } | null;
 type State = "prompt" | "granted" | "denied" | "acquiring" | "unsupported" | "error";
 
 export function useGeolocationWithStatus(options?: {
@@ -86,7 +86,7 @@ export function useGeolocationWithStatus(options?: {
             watcherRef.current = navigator.geolocation.watchPosition(
                 (pos) => {
                     if (!mountedRef.current) return;
-                    setPosition([pos.coords.latitude, pos.coords.longitude]);
+                    setPosition({ coords: [pos.coords.latitude, pos.coords.longitude], heading: pos.coords.heading ?? undefined });
                     setStatus("granted");
                 },
                 (err) => {
@@ -124,7 +124,7 @@ export function useGeolocationWithStatus(options?: {
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 if (!mountedRef.current) return;
-                setPosition([pos.coords.latitude, pos.coords.longitude]);
+                setPosition({ coords: [pos.coords.latitude, pos.coords.longitude], heading: pos.coords.heading ?? undefined });
                 setStatus("granted");
             },
             (err) => {
