@@ -1,5 +1,3 @@
-import LoadingAnimation from "../loader";
-
 export default function DefaultButton(props: {
     text: string;
     onClick?: () => void;
@@ -7,20 +5,16 @@ export default function DefaultButton(props: {
     loading?: boolean;
     disabled?: boolean;
 }) {
-    return props.loading ?
-        <button
-            className={ "flex items-center justify-center bg-gray-600 w-full rounded-xl py-2 z-[1000]" }
-        >
-            <LoadingAnimation />
-        </button> :
-        (
-            <button
-                className={ `bg-gray-600 w-full rounded-xl text-xl  py-2 z-[1000] text-white ${props.disabled ? "opacity-50" : "cursor-pointer"}` }
-                onClick={ props.onClick }
-                type={ props.type }
-                disabled={ props.disabled } >
-                { props.text }
+    const disabled = props.disabled || props.loading;
 
-            </ button>
-        );
+    return (
+        <button
+            className={ `flex items-center justify-center bg-gray-600 w-full rounded-xl min-h-9 py-1 z-1000 text-white ${disabled ? "opacity-50" : "cursor-pointer"}` }
+            onClick={ props.onClick }
+            type={ props.type }
+            disabled={ disabled }
+            aria-busy={ props.loading }>
+            { props.loading ? <span className="btn-spinner" role="status" aria-label="Loading" /> : props.text }
+        </button>
+    );
 }

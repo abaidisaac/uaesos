@@ -1,102 +1,78 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import type { Case } from "@/app/interface";
+import { useMemo, useState } from "react";
 import Map from "../components/map/map";
-import { supabase } from "../supabase";
-import { CheckAuth } from "../lib/auth";
+import { useAuth } from "../lib/auth";
+import { useCases } from "../lib/useCases";
 import LoadingAnimation from "../components/loader";
 import MyCases from "../components/map/myCases";
-import { User } from "@supabase/supabase-js";
-import ActiveCases from "../components/volunteer/listView";
+import ListView from "../components/volunteer/listView";
 import { useGeolocationWithStatus } from "../lib/location";
 
+const WATCH_OPTIONS: PositionOptions = { enableHighAccuracy: true, maximumAge: 300, timeout: 5000 };
+
 export default function Volunteer() {
-    const [cases, setCases] = useState<Case[]>();
-    const [myCases, setMyCases] = useState<Case[]>();
-    const [user, setUser] = useState<User>();
-    const [location, setLocation] = useState<{ coords: [number, number]; heading?: number }>();
     const [view, setView] = useState<"map" | "list">("list");
-    const { currentUser, loading: authLoading } = CheckAuth();
+    const { currentUser: user, loading: authLoading } = useAuth();
+    const userId = user?.id;
 
-    useEffect(() => {
-        if (currentUser) {
-            setUser(currentUser);
-        }
-    }, [currentUser]);
+    const { cases: allCases, error: fetchError, refetch } = useCases<Case>({
+        columns: "*",
+        realtime: true,
+    });
 
-    useEffect(() => {
-        fetchCases();
-    }, [user]);
+    const { position: location } = useGeolocationWithStatus({
+        autoRequest: true,
+        autoWatch: true,
+        watchOptions: WATCH_OPTIONS,
+    });
 
-    const fetchCases = async () => {
-        if (user?.id) {
-            const values = (await supabase.from("cases").select("*").eq("completed", false)).data;
-            setCases(values?.filter((data: Case) => !data.completed && !data.volunteer));
-            setMyCases(values?.filter((data: Case) => !data.completed && data.volunteer == user?.id));
-        }
-    };
+    const cases = useMemo(() => (allCases ?? []).filter((item) => !item.volunteer), [allCases]);
+    const myCases = useMemo(
+        () => (allCases ?? []).filter((item) => item.volunteer === userId),
+        [allCases, userId],
+    );
+    const mapCases = useMemo(() => [...cases, ...myCases], [cases, myCases]);
 
-    useEffect(() => {
-        if (!user?.id) return;
-
-        const channel = supabase
-            .channel("custom-all-channel")
-            .on("postgres_changes", { event: "*", schema: "public", table: "cases" }, (payload) => {
-                fetchCases();
-            })
-            .subscribe();
-
-        return () => {
-            try {
-                void supabase.removeChannel(channel);
-            } catch (err) {
-                console.error("Error removing supabase channel", err);
-            }
-        };
-    }, [user]);
-
-    const { position: geoPosition, startWatch, stopWatch } = useGeolocationWithStatus({ autoRequest: true, autoWatch: false });
-
-    useEffect(() => {
-        // if hook provides a position object, set it once
-        if (geoPosition) setLocation(geoPosition);
-    }, [geoPosition]);
-
-    useEffect(() => {
-        // start a light watch while this view is mounted to keep location reasonably fresh
-        startWatch({ enableHighAccuracy: true, maximumAge: 300, timeout: 5000 });
-        return () => { stopWatch(); };
-    }, [startWatch, stopWatch]);
-
-    // Combine regular cases and myCases so markers show for both sets
-    const mapCases = useMemo(() => {
-        const a: Case[] = [];
-        if (cases && cases.length) a.push(...cases);
-        if (myCases && myCases.length) a.push(...myCases);
-        return a;
-    }, [cases, myCases]);
-
-    if (authLoading) {
+    if (authLoading || !user) {
         return (
-            <main className="items-center justify-center h-screen">
+            <main className="flex items-center justify-center h-screen">
                 <LoadingAnimation />
             </main>
         );
     }
 
-    return cases && myCases && user ? (
-        <main className={(view == "map" ? "p-0" : "") + " h-screen w-screen"}>
-            {view == "list" ? (
-                <ActiveCases user={user} cases={cases} myCases={myCases} setView={setView} />
-            ) : (
-                <>
-                    <Map cases={mapCases} location={location?.coords} heading={location?.heading} user={user} />
-                    <MyCases user={user} cases={myCases} map setView={setView} />
-                </>
-            )}
-        </main>
-    ) : (
-        <main className="items-center justify-center h-screen">
-            <LoadingAnimation />
+    if (fetchError) {
+        return (
+            <main className="flex flex-col items-center justify-center h-screen gap-4 text-center p-5">
+                <p className="text-red-600 text-sm">Could not load cases. {fetchError}</p>
+                <button className="bg-gray-600 rounded-xl py-2 px-4 text-white cursor-pointer" onClick={() => refetch()}>
+                    Retry
+                </button>
+            </main>
+        );
+    }
+
+    if (!allCases) {
+        return (
+            <main className="flex items-center justify-center h-screen">
+                <LoadingAnimation />
+            </main>
+        );
+    }
+
+    return (
+        <main className="h-screen w-screen flex justify-center">
+            <div className={`h-full w-full max-w-3xl flex flex-col ${view == "list" ? "p-5 gap-2" : ""}`}>
+                {view == "list" ? (
+                    <ListView user={user} cases={cases} myCases={myCases} setView={setView} />
+                ) : (
+                    <div className="flex h-full relative">
+                        <Map cases={mapCases} location={location?.coords} heading={location?.heading} user={user} />
+                        <MyCases user={user} cases={myCases} setView={setView} />
+                    </div>
+                )}
+            </div>
         </main>
     );
 }

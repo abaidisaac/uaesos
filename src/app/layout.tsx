@@ -1,13 +1,22 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
 
-const inter = Poppins({ weight: "400", subsets: ["latin"] });
+const poppins = Poppins({
+    weight: ["400", "600"],
+    subsets: ["latin"],
+    display: "swap",
+});
 
 export const metadata: Metadata = {
-    title: "SOS",
-    description: "UAE rain SOS",
+    title: "UAE SOS",
+    description: "UAE SOS",
+    manifest: "/manifest.webmanifest",
+};
+
+export const viewport: Viewport = {
+    themeColor: "#000000",
 };
 
 export default function RootLayout({
@@ -17,8 +26,10 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <Analytics />
-            <body className={ inter.className }>{ children }</body>
+            <body className={ poppins.className }>
+                <Analytics />
+                { children }
+            </body>
         </html>
     );
 }

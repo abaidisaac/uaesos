@@ -1,0 +1,28 @@
+/* Marker icon styles used by Leaflet divIcon HTML strings in map.tsx.
+ * Kept out of inline `style="..."` attributes so a future CSP can drop
+ * `style-src 'unsafe-inline'` for anything except the small, unavoidable
+ * per-heading rotation on the current-location marker.
+ */
+.map-cluster-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 9999px;
+    color: #fff;
+    font-size: 1.125rem;
+}
+
+.map-cluster-badge--medical {
+    background-color: #dc2626;
+}
+
+.map-cluster-badge--general {
+    background-color: #2563eb;
+}
+
+.map-icon-nav {
+    width: 28px;
+    height: 28px;
+}

@@ -1,99 +1,23 @@
 "use client";
+import type { Case } from "@/app/interface";
 import "leaflet/dist/leaflet.css";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { useEffect, useRef, useState, useMemo } from "react";
+import "./mapIcons.css";
+import type { DivIcon, Icon } from "leaflet";
+import type { ReactNode } from "react";
+import { useMemo } from "react";
 import { User } from "@supabase/supabase-js";
 import PopUp from "./popUp";
 import navigationIcon from '@/../public/navigationIcon.png';
-import { loadLeafletModules } from "../../lib/leaflet";
+import { useLeaflet, imageSrc, type UseLeafletResult } from "../../lib/leaflet";
 import targetIcon from '@/../public/crosshair.png';
 import Image from "next/image";
 
-export default function Map(props: { cases: Case[]; location?: [number, number]; heading?: number; user: User }) {
-    const [components, setComponents] = useState<any>(null);
-    const leafletRef = useRef<any>(null);
+const DEFAULT_LOCATION: [number, number] = [25.2048, 55.2708];
 
-    useEffect(() => {
-        let mounted = true;
-        const load = async () => {
-            try {
-                const { L, RLModule } = await loadLeafletModules();
+function createMapHelpers(RL: NonNullable<UseLeafletResult>["RL"]) {
+    const { useMap, Marker } = RL;
 
-                const iconUrl = (markerIcon as any).src ?? (markerIcon as unknown as string);
-                const iconRetinaUrl = (markerIcon2x as any).src ?? (markerIcon2x as unknown as string);
-                const shadowUrl = (markerShadow as any).src ?? (markerShadow as unknown as string);
-
-                if (L && L.Icon && L.Icon.Default && typeof L.Icon.Default.mergeOptions === "function") {
-                    L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl });
-                }
-
-                if (!mounted) return;
-                setComponents(RLModule);
-                leafletRef.current = L;
-            } catch (err) {
-                console.error("Failed to load leaflet/react-leaflet:", err);
-            }
-        };
-        load();
-        return () => {
-            mounted = false;
-        };
-    }, []);
-
-
-    const grouped = useMemo<
-        { number: number; cases: Case[]; medical_emergencies: boolean; location: [number, number] }[]
-    >(() => {
-        // simple haversine formula for distance in meters
-        const haversine = ([lat1, lng1]: [number, number], [lat2, lng2]: [number, number]) => {
-            const toRad = (deg: number) => (deg * Math.PI) / 180;
-            const R = 6371000; // earth radius in m
-            const dLat = toRad(lat2 - lat1);
-            const dLng = toRad(lng2 - lng1);
-            const a =
-                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-                Math.sin(dLng / 2) * Math.sin(dLng / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return R * c;
-        };
-
-        const clusters: { number: number; cases: Case[]; medical_emergencies: boolean; location: [number, number] }[] = [];
-        const threshold = 100; // meters
-
-        props.cases.forEach((c) => {
-            if (!c.location) return;
-            const loc: [number, number] = [c.location[0], c.location[1]];
-            // try to find an existing cluster within threshold
-            const existing = clusters.find((g) => haversine(g.location, loc) <= threshold);
-            if (existing) {
-                existing.cases.push(c);
-                existing.number += 1;
-                if (c.medical_emergency) existing.medical_emergencies = true;
-                // update centroid
-                existing.location = [
-                    (existing.location[0] * (existing.number - 1) + loc[0]) / existing.number,
-                    (existing.location[1] * (existing.number - 1) + loc[1]) / existing.number,
-                ];
-            } else {
-                clusters.push({ number: 1, cases: [c], medical_emergencies: !!c.medical_emergency, location: loc });
-            }
-        });
-
-        return clusters;
-    }, [props.cases]);
-
-    if (!components) {
-        return <div className="h-full w-full" />;
-    }
-
-    const { MapContainer, TileLayer, Marker, Popup, Pane, useMap } = components as any;
-    const L = leafletRef.current;
-
-    // each marker can recenter the map when clicked
-    function MapMarker({ position, icon, children }: any) {
+    function MapMarker({ position, icon, children }: { position: [number, number]; icon?: DivIcon | Icon; children?: ReactNode }) {
         const map = useMap();
         return (
             <Marker
@@ -112,10 +36,118 @@ export default function Map(props: { cases: Case[]; location?: [number, number];
         );
     }
 
+    function RecenterControl({ location }: { location: [number, number] }) {
+        const map = useMap();
+        return (
+            <button
+                title="Recenter map"
+                aria-label="Recenter map on current location"
+                onClick={() => {
+                    map.panTo(location, {
+                        animate: true, easeLinearity: 0.25, duration: 1.0,
+                    });
+                }}
+                className="absolute right-5 bottom-20 z-500 bg-white rounded-full shadow p-2 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500"
+            >
+                <Image src={targetIcon} alt="" width={24} height={24} />
+            </button>
+        );
+    }
+
+    return { MapMarker, RecenterControl };
+}
+
+export default function Map(props: { cases: Case[]; location?: [number, number]; heading?: number; user: User }) {
+    const { leaflet, error } = useLeaflet();
+
+    const grouped = useMemo<
+        { number: number; cases: Case[]; medical_emergencies: boolean; location: [number, number] }[]
+    >(() => {
+        const haversine = ([lat1, lng1]: [number, number], [lat2, lng2]: [number, number]) => {
+            const toRad = (deg: number) => (deg * Math.PI) / 180;
+            const R = 6371000;
+            const dLat = toRad(lat2 - lat1);
+            const dLng = toRad(lng2 - lng1);
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                Math.sin(dLng / 2) * Math.sin(dLng / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        };
+
+        const clusters: { number: number; cases: Case[]; medical_emergencies: boolean; location: [number, number] }[] = [];
+        const threshold = 100;
+
+        props.cases.forEach((c) => {
+            if (!c.location) return;
+            const loc: [number, number] = [c.location[0], c.location[1]];
+            const existing = clusters.find((g) => haversine(g.location, loc) <= threshold);
+            if (existing) {
+                existing.cases.push(c);
+                existing.number += 1;
+                if (c.medical_emergency) existing.medical_emergencies = true;
+                existing.location = [
+                    (existing.location[0] * (existing.number - 1) + loc[0]) / existing.number,
+                    (existing.location[1] * (existing.number - 1) + loc[1]) / existing.number,
+                ];
+            } else {
+                clusters.push({ number: 1, cases: [c], medical_emergencies: !!c.medical_emergency, location: loc });
+            }
+        });
+
+        return clusters;
+    }, [props.cases]);
+
+    const helpers = useMemo(() => (leaflet ? createMapHelpers(leaflet.RL) : null), [leaflet]);
+
+    const clusterIcons = useMemo(() => {
+        const icons: Record<number, DivIcon> = {};
+        if (!leaflet?.L.divIcon) return icons;
+        grouped.forEach((p) => {
+            const className = p.medical_emergencies ? "map-cluster-badge map-cluster-badge--medical" : "map-cluster-badge map-cluster-badge--general";
+            const html = `<div class="${className}">${p.number}</div>`;
+            icons[p.cases[0].id] = leaflet.L.divIcon({ html, className: "", iconSize: [28, 28] });
+        });
+        return icons;
+    }, [leaflet, grouped]);
+
+    const hasLocation = props.location != null;
+    const currentLocationIcon = useMemo<DivIcon | Icon | undefined>(() => {
+        if (!hasLocation || !leaflet?.L.divIcon) return undefined;
+        const iconUrl = imageSrc(navigationIcon);
+        if (props.heading != null) {
+            const html = `<img src="${iconUrl}" class="map-icon-nav" style="transform:rotate(${props.heading}deg);"/>`;
+            return leaflet.L.divIcon({ html, iconSize: [28, 28], className: '' });
+        }
+        try {
+            return leaflet.L.icon({ iconUrl, iconSize: [28, 28], className: 'current-location-icon' });
+        } catch {
+            return undefined;
+        }
+    }, [leaflet, hasLocation, props.heading]);
+
+    if (error) {
+        return (
+            <div className="h-full w-full flex items-center justify-center p-4 text-center text-sm text-red-600">
+                Failed to load the map: {error}
+            </div>
+        );
+    }
+
+    if (!leaflet || !helpers) {
+        return <div className="h-full w-full" />;
+    }
+
+    const { MapContainer, TileLayer, Marker, Popup, Pane } = leaflet.RL;
+    const { MapMarker, RecenterControl } = helpers;
+
+    const center = props.location ?? DEFAULT_LOCATION;
+
     return (
         <div className="h-full w-full">
             <MapContainer
-                center={props.location}
+                center={center}
                 zoom={15}
                 className="h-full w-full"
                 scrollWheelZoom={true}
@@ -125,60 +157,19 @@ export default function Map(props: { cases: Case[]; location?: [number, number];
                 <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
                 <TileLayer pane="overlay" url="https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png" />
 
-                {props.location && L && (() => {
-                    const iconUrl = (navigationIcon as any).src ?? (navigationIcon as unknown as string);
-                    if (props.heading != null && L && L.divIcon) {
-                        // rotate an image by heading degrees
-                        const html = `<img src="${iconUrl}" style="width:28px;height:28px;transform:rotate(${props.heading}deg);"/>`;
-                        const rotIcon = L.divIcon({ html, iconSize: [28, 28], className: '' });
-                        return <Marker position={props.location} icon={rotIcon} />;
-                    }
-                    if (L && L.icon) {
-                        try {
-                            const currentIcon = L.icon({ iconUrl, iconSize: [28, 28], className: 'current-location-icon' });
-                            return <Marker position={props.location} icon={currentIcon} />;
-                        } catch (err) {
-                            return <Marker position={props.location} />;
-                        }
-                    }
-                    return <Marker position={props.location} />;
-                })()}
+                {props.location && <Marker position={props.location} icon={currentLocationIcon} />}
 
-                {grouped.map((p, idx) => {
-                    const html = `<div class=\"flex items-center justify-center text-lg rounded-full ${p.medical_emergencies ? "bg-red-600" : "bg-blue-600"
-                        }\">${p.number}</div>`;
+                {grouped.map((p) => (
+                    <MapMarker key={p.cases[0].id} position={p.location} icon={clusterIcons[p.cases[0].id]}>
+                        <Popup>
+                            <PopUp cases={p.cases} user={props.user} />
+                        </Popup>
+                    </MapMarker>
+                ))}
 
-                    const icon = L && L.divIcon ? L.divIcon({ html, className: "", iconSize: [28, 28] }) : undefined;
-
-                    return (
-                        <MapMarker key={idx} position={p.location} icon={icon}>
-                            <Popup>
-                                <PopUp cases={p.cases} user={props.user} />
-                            </Popup>
-                        </MapMarker>
-                    );
-                })}
-
-                {props.location && (() => {
-                    function RecenterControl({ location }: { location: [number, number] }) {
-                        const map = useMap();
-                        return (
-                            <button
-                                title="Recenter map"
-                                onClick={() => {
-                                    map.panTo(location, {
-                                        animate: true, easeLinearity: 0.25, duration: 1.0,
-                                    });
-                                }
-                                }
-                                className="absolute right-5 bottom-20 z-500 bg-white rounded-full shadow p-2 hover:shadow-md focus:outline-none"
-                            >
-                                <Image src={targetIcon} alt="Recenter" width={24} height={24} />
-                            </button>
-                        );
-                    }
-                    return <RecenterControl location={props.location as [number, number]} />;
-                })()}
+                {props.location && (
+                    <RecenterControl location={props.location} />
+                )}
             </MapContainer>
 
 

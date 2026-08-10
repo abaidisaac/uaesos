@@ -1,44 +1,63 @@
 "use client";
-import { useRouter } from "next/navigation";
+import { Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Button from "../components/input/button";
+import AuthShell from "../components/auth/authShell";
 import FormTextBox from "../components/input/formTextBox";
 import { supabase } from "../supabase";
-import { useState, FormEvent } from "react";
+import { useAuthAction } from "../lib/useAuthAction";
 
-export default function SignIn() {
+function safeRedirect(redirectTo: string | null): string {
+    if (redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")) {
+        return redirectTo;
+    }
+    return "/volunteer";
+}
+
+function SignInForm() {
     const router = useRouter();
-    const [loading, setLoading] = useState(false);
-    const signIn = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        setLoading(true);
-        const form = new FormData(event.currentTarget);
+    const searchParams = useSearchParams();
+    const { onSubmit, loading, error } = useAuthAction(async (form) => {
         const email = form.get("email") as string | null;
         const password = form.get("password") as string | null;
         if (!email || !password) {
-            setLoading(false);
             return;
         }
-        const { data, error } = await supabase.auth.signInWithPassword({
+
+        const { error } = await supabase.auth.signInWithPassword({
             email,
             password,
         });
-        setLoading(false);
-        if (data) {
-            router.push("/volunteer");
-        } else if (error) {
-            console.error(error);
-            alert(error.message);
+
+        if (error) {
+            throw new Error(error.message);
         }
-    };
+
+        router.push(safeRedirect(searchParams.get("redirectTo")));
+    });
 
     return (
-        <main>
-            <form className="flex flex-col gap-5" onSubmit={signIn}>
-                <FormTextBox required={true} text="Email" name="email" type="email" />
-                <FormTextBox required={true} text="Password" name="password" type="password" />
-                <Button text="Login" type="submit" loading={loading} />
-            </form>
-            <Button text="Sign Up" type="button" onClick={() => router.push("/signup")} />
-        </main>
+        <AuthShell
+            title="Login"
+            onSubmit={onSubmit}
+            error={error}
+            footer={
+                <div className="flex flex-col gap-2">
+                    <Button text="Sign Up" type="button" onClick={() => router.push("/signup")} />
+                    <Button text="Forgot Password?" type="button" onClick={() => router.push("/forgotpassword")} />
+                </div>
+            }>
+            <FormTextBox required={true} text="Email" name="email" type="email" autoComplete="email" />
+            <FormTextBox required={true} text="Password" name="password" type="password" autoComplete="current-password" />
+            <Button text="Login" type="submit" loading={loading} />
+        </AuthShell>
+    );
+}
+
+export default function SignIn() {
+    return (
+        <Suspense>
+            <SignInForm />
+        </Suspense>
     );
 }

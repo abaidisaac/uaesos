@@ -15,7 +15,11 @@ export function useGeolocationWithStatus(options?: {
 
     const watcherRef = useRef<number | null>(null);
     const mountedRef = useRef(true);
-    const [isWatching, setIsWatching] = useState(false);
+    // Ref keeps startWatch's identity stable across inline options objects.
+    const watchOptionsRef = useRef(watchOptions);
+    useEffect(() => {
+        watchOptionsRef.current = watchOptions;
+    }, [watchOptions]);
 
     useEffect(() => {
         mountedRef.current = true;
@@ -28,8 +32,10 @@ export function useGeolocationWithStatus(options?: {
         };
     }, []);
 
+    // `navigator` doesn't exist during SSR, so this is detected on the client after mount.
     useEffect(() => {
         if (!("geolocation" in navigator)) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setStatus("unsupported");
             setLocationError("Geolocation not supported by this browser.");
             return;
@@ -40,17 +46,19 @@ export function useGeolocationWithStatus(options?: {
         }
 
         let cancelled = false;
+        let permissionStatus: PermissionStatus | null = null;
+        const handleChange = () => {
+            if (!mountedRef.current || !permissionStatus) return;
+            setStatus(permissionStatus.state as State);
+        };
+
         navigator.permissions
             .query({ name: "geolocation" as PermissionName })
             .then((ps) => {
                 if (cancelled || !mountedRef.current) return;
+                permissionStatus = ps;
                 setStatus(ps.state as State);
-                if (typeof ps.onchange === "function") {
-                    ps.onchange = () => {
-                        if (!mountedRef.current) return;
-                        setStatus(ps.state as State);
-                    };
-                }
+                ps.addEventListener("change", handleChange);
             })
             .catch(() => {
                 setStatus("prompt");
@@ -58,6 +66,7 @@ export function useGeolocationWithStatus(options?: {
 
         return () => {
             cancelled = true;
+            permissionStatus?.removeEventListener("change", handleChange);
         };
     }, []);
 
@@ -65,11 +74,8 @@ export function useGeolocationWithStatus(options?: {
         if (watcherRef.current !== null && "geolocation" in navigator) {
             try {
                 navigator.geolocation.clearWatch(watcherRef.current);
-            } catch (e) {
-                // ignore
-            }
+            } catch { }
             watcherRef.current = null;
-            setIsWatching(false);
         }
     }, []);
 
@@ -86,7 +92,15 @@ export function useGeolocationWithStatus(options?: {
             watcherRef.current = navigator.geolocation.watchPosition(
                 (pos) => {
                     if (!mountedRef.current) return;
-                    setPosition({ coords: [pos.coords.latitude, pos.coords.longitude], heading: pos.coords.heading ?? undefined });
+                    const heading = pos.coords.heading ?? undefined;
+                    setPosition((prev) =>
+                        prev &&
+                            prev.coords[0] === pos.coords.latitude &&
+                            prev.coords[1] === pos.coords.longitude &&
+                            prev.heading === heading
+                            ? prev
+                            : { coords: [pos.coords.latitude, pos.coords.longitude], heading }
+                    );
                     setStatus("granted");
                 },
                 (err) => {
@@ -102,14 +116,13 @@ export function useGeolocationWithStatus(options?: {
                         setLocationError(err.message || "Failed to get location.");
                     }
                 },
-                { enableHighAccuracy: true, timeout: 8000, ...(opts || watchOptions || {}) }
+                { enableHighAccuracy: true, timeout: 8000, ...(opts || watchOptionsRef.current || {}) }
             );
-            setIsWatching(true);
-        } catch (e) {
+        } catch {
             setStatus("error");
             setLocationError("Unable to start location watch.");
         }
-    }, [stopWatch, watchOptions]);
+    }, [stopWatch]);
 
     const requestLocation = useCallback((opts?: PositionOptions) => {
         if (!("geolocation" in navigator)) {
@@ -145,17 +158,16 @@ export function useGeolocationWithStatus(options?: {
     }, []);
 
     useEffect(() => {
-        if (autoRequest) {
-            requestLocation();
-        }
         if (autoWatch) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             startWatch();
+        } else if (autoRequest) {
+            requestLocation();
         }
         return () => {
             stopWatch();
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [autoRequest, autoWatch, requestLocation, startWatch, stopWatch]);
 
     return {
         position,
@@ -164,12 +176,6 @@ export function useGeolocationWithStatus(options?: {
         requestLocation,
         startWatch,
         stopWatch,
-        isWatching,
     };
-}
-
-export function useCurrentLocation() {
-    const { position } = useGeolocationWithStatus();
-    return position;
 }
 

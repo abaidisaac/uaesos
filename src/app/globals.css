@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-@layer utilities {
+@layer base {
     :root {
         --foreground-rgb: 0, 0, 0;
         --background-start-rgb: 214, 219, 220;
@@ -15,28 +15,26 @@
         }
     }
 
+    html {
+        height: 100%;
+    }
+
     body {
+        min-height: 100%;
         color: rgb(var(--foreground-rgb));
         background: linear-gradient(to bottom, transparent, rgb(var(--background-end-rgb)))
             rgb(var(--background-start-rgb));
     }
 
-    main {
-        display: flex;
-        flex-direction: column;
-        padding: 20px;
-        gap: 10px;
+    h1 {
+        font-size: 24px;
+        font-weight: 600;
     }
-}
 
-@layer utilities {
-    .text-balance {
-        text-wrap: balance;
+    h2 {
+        font-size: 15px;
+        font-weight: 600;
     }
-}
-
-h1 {
-    font-size: 21px;
 }
 
 .leaflet-container .leaflet-popup-content p {
@@ -49,4 +47,20 @@ h1 {
     flex-direction: column;
     gap: 5px;
     margin: 10px;
+}
+
+.btn-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: btn-spin 0.7s linear infinite;
+}
+
+@keyframes btn-spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
